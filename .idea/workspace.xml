@@ -25,7 +25,7 @@
       <file leaf-file-name="tetris.rb" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/tetris.rb">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="47" column="56" selection-start="1190" selection-end="1190" vertical-scroll-proportion="0.43514645">
+            <state line="4" column="18" selection-start="72" selection-end="72" vertical-scroll-proportion="0.08368201">
               <folding />
             </state>
           </provider>
@@ -478,9 +478,16 @@
         <state line="73" column="13" selection-start="2545" selection-end="2545" vertical-scroll-proportion="0.38523644" />
       </provider>
     </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/rubystubs193/io.rb">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1312" column="8" selection-start="52229" selection-end="52229" vertical-scroll-proportion="0.33333334">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/tetris.rb">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="47" column="56" selection-start="1190" selection-end="1190" vertical-scroll-proportion="0.43514645">
+        <state line="4" column="18" selection-start="72" selection-end="72" vertical-scroll-proportion="0.08368201">
           <folding />
         </state>
       </provider>
