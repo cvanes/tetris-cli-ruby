@@ -1,11 +1,19 @@
 require 'curses'
 include Curses
 
-BOARD_ROWS = 20
-BOARD_COLUMNS = 30
-STATUS_LINE = 22
+BOARD_ROWS = 15
+BOARD_COLUMNS = 10
+STATUS_LINE = BOARD_ROWS + 2
 
-def write(row = 0, column = 0, text)
+def write_top_left(text)
+  write(0, 0, text)
+end
+
+def write_status(text)
+  write(STATUS_LINE, 0, text)
+end
+
+def write(row, column, text)
   Curses.setpos(row, column)
   Curses.addstr(text);
   Curses.refresh
@@ -13,17 +21,17 @@ end
 
 class Tetris
   def initialize
-    @pieces = ["I", "J", "L", "O", "S", "Z", "T"]
+    @all_shapes = ["I", "J", "L", "O", "S", "Z", "T"]
     @board = Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
     @level = 1
   end
 
   def newPiece
-    @active_piece = eval(@pieces[rand(0..6)]).new
-    draw
+    @active_piece = eval(@all_shapes[rand(0..6)]).new
+    draw_board
   end
 
-  def draw
+  def draw_board
     clear_board_of_active_pieces
     @active_piece.each_cell { |row,column|
       if @active_piece.blocks[row][column] == "x"
@@ -37,7 +45,7 @@ class Tetris
       end
       game_board += "\n"
     end
-    write(game_board)
+    write_top_left(game_board)
   end
 
   def mark_active_piece_inactive
@@ -52,16 +60,6 @@ class Tetris
     each_board_cell { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
   end
 
-  def left
-    @active_piece.left
-    draw
-  end
-
-  def right
-    @active_piece.right
-    draw
-  end
-
   def down
     @active_piece.row += 1
     if blocked?
@@ -69,19 +67,21 @@ class Tetris
       newPiece
     end
     delete_complete_lines
-    draw
+    draw_board
   end
 
   def delete_complete_lines
-    for i in 0..@board.length - 1
-      line_complete = true
-      for j in 0..@board[i].length - 1
-        line_complete &= @board[i][j] == "o"
+    @board.each_index { |i|
+      if @board[i].uniq == ["o"]
+        @board[i] = Array.new(BOARD_COLUMNS, "=")
+        sleep 3
       end
-      if line_complete
-        @board.delete_at i
-        sleep 1
-      end
+    }
+    @board.delete_if { |row|
+      row.uniq == ["="]
+    }
+    for i in @board.size..BOARD_ROWS - 1
+      @board.unshift Array.new(BOARD_COLUMNS, "-")
     end
   end
 
@@ -123,7 +123,7 @@ class Tetris
         down
         sleep 1 / @level
         if game_over?
-          write(STATUS_LINE, 0, "Game Over!!!\n\nPress any key...")
+          write_status("Game Over!!!\n\nPress any key...")
           block_waiting_for_key_press
           break
         end
@@ -140,13 +140,15 @@ class Tetris
     case Curses.getch
       when Curses::Key::UP
         @active_piece.rotate
-        draw
+        draw_board
       when Curses::Key::DOWN
         down
       when Curses::Key::LEFT
-        left
+        @active_piece.left
+        draw_board
       when Curses::Key::RIGHT
-        right
+        @active_piece.right
+        draw_board
     end
   end
 end
