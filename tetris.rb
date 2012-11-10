@@ -51,23 +51,14 @@ class Tetris
     each_board_cell { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
   end
 
-  def rotate
-    @active_piece.rotate
+  def left
+    @active_piece.left
     draw
   end
 
-  def left
-    if @active_piece.can_move_left?
-      @active_piece.column -= 1
-      draw
-    end
-  end
-
   def right
-    if @active_piece.can_move_right?
-      @active_piece.column += 1
-      draw
-    end
+    @active_piece.right
+    draw
   end
 
   def down
@@ -76,7 +67,7 @@ class Tetris
       mark_active_piece_inactive
       newPiece
     end
-    delete_complete_lines
+    #delete_complete_lines
     draw
   end
 
@@ -147,7 +138,8 @@ class Tetris
   def handle_user_input
     case Curses.getch
       when Curses::Key::UP
-        rotate
+        @active_piece.rotate
+        draw
       when Curses::Key::DOWN
         down
       when Curses::Key::LEFT
@@ -199,8 +191,20 @@ class Tetrimino
     @column > 0
   end
 
+  def left
+    if can_move_left?
+      @column -= 1
+    end
+  end
+
   def can_move_right?
     @column + width < BOARD_COLUMNS
+  end
+
+  def right
+    if can_move_right?
+      @column += 1
+    end
   end
 
   def rotate
