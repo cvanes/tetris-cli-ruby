@@ -19,12 +19,15 @@ class Tetris
 
   def newPiece
     @active_piece = eval(@pieces[rand(0..6)]).new
+    draw
   end
 
   def draw
     clear_board_of_active_pieces
     @active_piece.each_cell { |row,column|
-      @board[row + @active_piece.row][column + @active_piece.column] = @active_piece.blocks[row][column]
+      if @active_piece.blocks[row][column] == "x"
+        @board[row + @active_piece.row][column + @active_piece.column] = @active_piece.blocks[row][column]
+      end
     }
     game_board = "\n"
     @board.each do |row|
@@ -45,11 +48,11 @@ class Tetris
   end
 
   def update_active_piece_display(new_char)
-    iterate_over_board { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
+    each_board_cell { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
   end
 
   def rotate
-    #@active_piece.rotate
+    @active_piece.rotate
     draw
   end
 
@@ -68,37 +71,45 @@ class Tetris
   end
 
   def down
-    if @active_piece.hit_bottom?
+    @active_piece.row += 1
+    if blocked?
       mark_active_piece_inactive
       newPiece
-      draw
-    else
-      draw
-      @active_piece.row += 1
-      if next_move_blocked_vertically?
-        mark_active_piece_inactive
-        newPiece
+    end
+    delete_complete_lines
+    draw
+  end
+
+  def delete_complete_lines
+    for i in 0..@board.length - 1
+      line_complete = true
+      for j in 0..@board[i].length - 1
+        line_complete &= @board[i][j] == "o"
+      end
+      if line_complete
+        @board.delete_at i
+        sleep 1
       end
     end
   end
 
   def game_over?
-    next_move_blocked_vertically? && @active_piece.row == 0
+    blocked? && @active_piece.row == 0
   end
 
-  def next_move_blocked_vertically?
+  def blocked?
     if @active_piece.bottom >= BOARD_ROWS
       return true
     end
-    for i in 0..@active_piece.blocks[@active_piece.height - 1].length
-      if @board[@active_piece.bottom][i + @active_piece.column] == "o" && @active_piece.blocks[@active_piece.height - 1][i] == "x"
+    @active_piece.each_cell { |row,column|
+      if @board[@active_piece.row + row][@active_piece.column + column] == "o" && @active_piece.blocks[row][column] == "x"
         return true
       end
-    end
+    }
     false
   end
 
-  def iterate_over_board
+  def each_board_cell
     for i in 0..@board.length - 1
       for j in 0..@board[i].length - 1
         yield i, j
@@ -115,17 +126,22 @@ class Tetris
 
     Thread.new {
       newPiece
+      sleep 1 / @level
       loop do
         down
         sleep 1 / @level
         if game_over?
           write(STATUS_LINE, 0, "Game Over!!!\n\nPress any key...")
-          Curses.timeout = -1
-          Curses.getch
+          block_waiting_for_key_press
           break
         end
       end
     }.join
+  end
+
+  def block_waiting_for_key_press
+    Curses.timeout = -1
+    Curses.getch
   end
 
   def handle_user_input
@@ -179,10 +195,6 @@ class Tetrimino
     @row + height - 1
   end
 
-  def hit_bottom?
-    bottom >= BOARD_ROWS
-  end
-
   def can_move_left?
     @column > 0
   end
@@ -192,53 +204,51 @@ class Tetrimino
   end
 
   def rotate
-    write(STATUS_LINE, 0 , @all_block_positions)
-    @all_block_positions.rotate
-    write(STATUS_LINE, 0 , @all_block_positions)
-    @blocks = @all_block_positions.first
-    write(STATUS_LINE, 0 , @blocks)
+    temp = @all_block_positions.shift
+    @all_block_positions.push(temp)
+    @blocks = temp
   end
 end
 
 class I < Tetrimino
   def initialize
-    super([[["x", "x", "x", "x"]], [["x"],["x"],["x"],["x"]]])
+    super([[%w[x x x x]], [["x"],["x"],["x"],["x"]]])
   end
 end
 
 class J < Tetrimino
   def initialize
-    super([[["-", "x"], ["-", "x"], ["x", "x"]]])
+    super([[%w[- x], %w[- x], %w[x x]], [%w[x - -], %w[x x x]], [%w[x x], %w[x -], %w[x -]], [%w[x x x], %w[- - x]]])
   end
 end
 
 class L < Tetrimino
   def initialize
-    super([[["x", "-"], ["x", "-"], ["x", "x"]]])
+    super([[%w[x -], %w[x -], %w[x x]], [%w[x x x], %w[x - -]], [%w[x x], %w[- x], %w[- x]], [%w[- - x], %w[x x x]]])
   end
 end
 
 class O < Tetrimino
   def initialize
-    super([[["x", "x"], [ "x", "x"]]])
+    super([[%w[x x], %w[x x]]])
   end
 end
 
 class S < Tetrimino
   def initialize
-    super([[["-", "x", "x"], ["x", "x", "-"]]])
+    super([[%w[- x x], %w[x x -]], [%w[x -], %w[x x], %w[- x]]])
   end
 end
 
 class Z < Tetrimino
   def initialize
-    super([[["x", "x", "-"], ["-", "x", "x"]]])
+    super([[%w[x x -], %w[- x x]], [%w[- x], %w[x x], %w[x -]]])
   end
 end
 
 class T < Tetrimino
   def initialize
-    super([[["x", "x", "x"], ["-", "x", "-"]]])
+    super([[%w[x x x], %w[- x -]], [%w[- x], %w[x x], %w[- x]],[%w[- x -], %w[x x x]], [%w[x -], %w[x x], %w[x -]]])
   end
 end
 
