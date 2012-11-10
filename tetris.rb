@@ -1,4 +1,5 @@
 require 'curses'
+include Curses
 
 BOARD_ROWS = 20
 BOARD_COLUMNS = 30
@@ -67,7 +68,7 @@ class Tetris
       mark_active_piece_inactive
       newPiece
     end
-    #delete_complete_lines
+    delete_complete_lines
     draw
   end
 
@@ -154,9 +155,9 @@ class Tetrimino
   attr_accessor :blocks
   attr_accessor :row, :column
 
-  def initialize(blocks)
-    @all_block_positions = blocks
-    @blocks = @all_block_positions.first
+  def initialize(all_rotations)
+    @all_rotations = all_rotations
+    @blocks = @all_rotations.first
     @column = (BOARD_COLUMNS - width) / 2 - 1
     @row = 0
   end
@@ -208,27 +209,33 @@ class Tetrimino
   end
 
   def rotate
-    temp = @all_block_positions.shift
-    @all_block_positions.push(temp)
-    @blocks = temp
+    @blocks = @all_rotations.shift
+    @all_rotations.push(@blocks)
   end
 end
 
 class I < Tetrimino
   def initialize
-    super([[%w[x x x x]], [["x"],["x"],["x"],["x"]]])
+    super([[%w[x x x x]],
+           [%w[x],%w[x],%w[x],%w[x]]])
   end
 end
 
 class J < Tetrimino
   def initialize
-    super([[%w[- x], %w[- x], %w[x x]], [%w[x - -], %w[x x x]], [%w[x x], %w[x -], %w[x -]], [%w[x x x], %w[- - x]]])
+    super([[%w[- x], %w[- x], %w[x x]],
+           [%w[x - -], %w[x x x]],
+           [%w[x x], %w[x -], %w[x -]],
+           [%w[x x x], %w[- - x]]])
   end
 end
 
 class L < Tetrimino
   def initialize
-    super([[%w[x -], %w[x -], %w[x x]], [%w[x x x], %w[x - -]], [%w[x x], %w[- x], %w[- x]], [%w[- - x], %w[x x x]]])
+    super([[%w[x -], %w[x -], %w[x x]],
+           [%w[x x x], %w[x - -]],
+           [%w[x x], %w[- x], %w[- x]],
+           [%w[- - x], %w[x x x]]])
   end
 end
 
@@ -240,26 +247,40 @@ end
 
 class S < Tetrimino
   def initialize
-    super([[%w[- x x], %w[x x -]], [%w[x -], %w[x x], %w[- x]]])
+    super([[%w[- x x], %w[x x -]],
+           [%w[x -], %w[x x], %w[- x]]])
   end
 end
 
 class Z < Tetrimino
   def initialize
-    super([[%w[x x -], %w[- x x]], [%w[- x], %w[x x], %w[x -]]])
+    super([[%w[x x -], %w[- x x]],
+           [%w[- x], %w[x x], %w[x -]]])
   end
 end
 
 class T < Tetrimino
   def initialize
-    super([[%w[x x x], %w[- x -]], [%w[- x], %w[x x], %w[- x]],[%w[- x -], %w[x x x]], [%w[x -], %w[x x], %w[x -]]])
+    super([[%w[x x x], %w[- x -]],
+           [%w[- x], %w[x x], %w[- x]],
+           [%w[- x -], %w[x x x]],
+           [%w[x -], %w[x x], %w[x -]]])
   end
 end
 
-Curses.noecho
-Curses.init_screen
-Curses.stdscr.keypad(true)
+begin
+  Curses.noecho
+  Curses.init_screen
+  Curses.stdscr.keypad(true)
+  #Curses.start_color
+  #Curses.init_pair(COLOR_BLUE,COLOR_BLUE,COLOR_BLACK)
+  #Curses.attron(color_pair(COLOR_BLUE)|A_BLINK) {
+  #  Curses.setpos(STATUS_LINE, 0)
+  #  Curses.addstr("This is blue!!!");
+  #  Curses.refresh
+  #}
 
-Tetris.new.start_game
-
-Curses.close_screen
+  Tetris.new.start_game
+ensure
+  Curses.close_screen
+end
