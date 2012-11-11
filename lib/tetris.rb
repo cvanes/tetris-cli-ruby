@@ -92,7 +92,6 @@ class Tetris
   def rotate
     if can_rotate?
       if @active_shape.column + @active_shape.height > BOARD_COLUMNS
-        # shift to the left before rotating
         @active_shape.column = BOARD_COLUMNS - @active_shape.height
       end
       @active_shape.rotate
