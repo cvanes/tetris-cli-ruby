@@ -193,11 +193,11 @@ class Tetrimino
   end
 
   def each_cell
-    for row in 0..@blocks.length - 1
-      for column in 0..@blocks[row].length - 1
+    @blocks.each_index { |row|
+      @blocks[row].each_index { |column|
         yield row, column, @blocks[row][column]
-      end
-    end
+      }
+    }
   end
 
   def height
