@@ -1,44 +1,11 @@
-require 'curses'
-include Curses
-
-BOARD_ROWS = ARGV[0] == nil ? 20 : ARGV[0].to_i
-BOARD_COLUMNS = ARGV[1] == nil ? 30 : ARGV[1].to_i
-STATUS_LINE = BOARD_ROWS + 2
-SCORE_ROW = 2
-SCORE_COLUMN = BOARD_COLUMNS + 2
-
-def write_top_left(text)
-  write(0, 0, text)
-end
-
-def write_status(text)
-  clear_status_line
-  write(STATUS_LINE, 0, text)
-end
-
-def write_score(lines, level)
-  write(SCORE_ROW, SCORE_COLUMN, "Lines: " + lines.to_s)
-  write(SCORE_ROW + 1, SCORE_COLUMN, "Level: " + level.to_s)
-end
-
-def clear_status_line
-  Curses.setpos(STATUS_LINE, 0)
-  Curses.deleteln
-end
-
-def write(row, column, text)
-  Curses.setpos(row, column)
-  Curses.addstr(text);
-  Curses.refresh
-end
-
 class Tetris
-  def initialize
+  def initialize(ui)
     @all_shapes = ["I", "J", "L", "O", "S", "Z", "T"]
     @board = Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
     @level = 1
     @lines = 0
     @game_over = false
+    @ui = ui
   end
 
   def new_shape
@@ -51,8 +18,8 @@ class Tetris
   def draw_board
     clear_board_of_active_shapes
     add_active_shape_to_board
-    write_top_left(board_to_s)
-    write_score(@lines, @level)
+    @ui.show_board(board_to_s)
+    @ui.set_score(@lines, @level)
   end
 
   def add_active_shape_to_board
@@ -180,32 +147,25 @@ class Tetris
   end
 
   def start_game
-    @user_input_thread = Thread.new {
-      loop do
-        handle_user_input
-        draw_board
-        if game_over?
-          @game_thread.kill
-          display_game_over
-          break
-        end
-      end
-    }
-
-    @game_thread = Thread.new {
+    game_thread = Thread.new {
       new_shape
       draw_board
       sleep_for_level
       loop do
-        if game_over?
-          @user_input_thread.kill
-          display_game_over
-          break
-        else
-          down
-        end  
+        down  
         draw_board
         sleep_for_level
+      end
+    }
+
+    Thread.new {
+      loop do
+        if game_over?
+          @ui.display_game_over
+          game_thread.kill
+          break
+        end
+        sleep 0.25
       end
     }.join
   end
@@ -214,31 +174,8 @@ class Tetris
     @game_over
   end
 
-  def display_game_over
-    write_status("Game Over!!!\n\nPress any key...")
-    block_waiting_for_confirmation
-  end
-
   def sleep_for_level
     sleep 1.0 / (@level * 0.5)
-  end
-
-  def block_waiting_for_confirmation
-    Curses.timeout = -1
-    Curses.getch
-  end
-
-  def handle_user_input
-    case Curses.getch
-      when Curses::Key::UP
-        rotate
-      when Curses::Key::DOWN
-        down
-      when Curses::Key::LEFT
-        left
-      when Curses::Key::RIGHT
-        right
-    end
   end
 end
 
@@ -349,14 +286,4 @@ class T < Tetrimino
            [%w[- x -], %w[x x x]],
            [%w[x -], %w[x x], %w[x -]]])
   end
-end
-
-begin
-  Curses.noecho
-  Curses.init_screen
-  Curses.stdscr.keypad(true)
-
-  Tetris.new.start_game
-ensure
-  Curses.close_screen
 end
