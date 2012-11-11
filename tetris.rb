@@ -42,7 +42,7 @@ class Tetris
   end
 
   def newPiece
-    @active_piece = eval(@all_shapes[rand(0..6)]).new
+    @active_shape = eval(@all_shapes[rand(0..6)]).new
     if !can_move_down?
       @game_over = true
     end
@@ -50,9 +50,9 @@ class Tetris
 
   def draw_board
     clear_board_of_active_pieces
-    @active_piece.each_cell { |row,column|
-      if @active_piece.blocks[row][column] == "x"
-        @board[row + @active_piece.row][column + @active_piece.column] = @active_piece.blocks[row][column]
+    @active_shape.each_cell { |row,column|
+      if @active_shape.blocks[row][column] == "x"
+        @board[row + @active_shape.row][column + @active_shape.column] = @active_shape.blocks[row][column]
       end
     }
     game_board = "\n"
@@ -78,42 +78,52 @@ class Tetris
     each_board_cell { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
   end
 
+  def can_rotate?
+    @active_shape.column + @active_shape.height <= BOARD_COLUMNS
+  end
+
+  def rotate
+    if can_rotate?
+      @active_shape.rotate
+    end
+  end
+
   def can_move_left?
-    if @active_piece.column <= 0
+    if @active_shape.column <= 0
       return false
     end
-    can_move?(@active_piece.row, @active_piece.column - 1)
+    can_move?(@active_shape.row, @active_shape.column - 1)
   end
 
   def left
     if can_move_left?
-      @active_piece.column -= 1
+      @active_shape.column -= 1
     end
   end
 
   def can_move_right?
-    if @active_piece.column + @active_piece.width >= BOARD_COLUMNS
+    if @active_shape.column + @active_shape.width >= BOARD_COLUMNS
       return false
     end
-    can_move?(@active_piece.row, @active_piece.column + 1)
+    can_move?(@active_shape.row, @active_shape.column + 1)
   end
 
   def right
     if can_move_right?
-      @active_piece.column += 1
+      @active_shape.column += 1
     end
   end
 
   def can_move_down?
-    if @active_piece.bottom + 1 >= BOARD_ROWS
+    if @active_shape.bottom + 1 >= BOARD_ROWS
       return false
     end
-    can_move?(@active_piece.row + 1, @active_piece.column)
+    can_move?(@active_shape.row + 1, @active_shape.column)
   end
 
   def can_move?(start_row, start_column)
-    @active_piece.each_cell { |row,column|
-      if @board[start_row + row][start_column + column] == "o" && @active_piece.blocks[row][column] == "x"
+    @active_shape.each_cell { |row,column|
+      if @board[start_row + row][start_column + column] == "o" && @active_shape.blocks[row][column] == "x"
         return false
       end
     }
@@ -122,7 +132,7 @@ class Tetris
 
   def down
     if can_move_down?
-      @active_piece.row += 1
+      @active_shape.row += 1
       delete_complete_lines
     else
       mark_active_piece_inactive
@@ -159,28 +169,28 @@ class Tetris
   end
 
   def start_game
-    user_input_thread = Thread.new {
+    @user_input_thread = Thread.new {
       loop do
         handle_user_input
         draw_board
-        if @game_over
-          game_thread.kill
-          game_over
+        if game_over?
+          @game_thread.kill
+          display_game_over
           break
         end
       end
     }
 
-    game_thread = Thread.new {
+    @game_thread = Thread.new {
       newPiece
       draw_board
       sleep_for_level
       loop do
-        if @game_over
-          user_input_thread.kill
-          game_over
+        if game_over?
+          @user_input_thread.kill
+          display_game_over
           break
-        elsif can_move_down? 
+        else
           down
         end  
         draw_board
@@ -189,7 +199,11 @@ class Tetris
     }.join
   end
 
-  def game_over
+  def game_over?
+    @game_over
+  end
+
+  def display_game_over
     write_status("Game Over!!!\n\nPress any key...")
     block_waiting_for_key_press
   end
@@ -206,8 +220,7 @@ class Tetris
   def handle_user_input
     case Curses.getch
       when Curses::Key::UP
-        @active_piece.rotate
-        draw_board
+        rotate
       when Curses::Key::DOWN
         down
       when Curses::Key::LEFT
