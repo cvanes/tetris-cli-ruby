@@ -1,8 +1,8 @@
 require 'curses'
 include Curses
 
-BOARD_ROWS = 15
-BOARD_COLUMNS = 10
+BOARD_ROWS = ARGV[0] == nil ? 20 : ARGV[0].to_i
+BOARD_COLUMNS = ARGV[1] == nil ? 30 : ARGV[1].to_i
 STATUS_LINE = BOARD_ROWS + 2
 SCORE_ROW = 2
 SCORE_COLUMN = BOARD_COLUMNS + 2
@@ -12,12 +12,18 @@ def write_top_left(text)
 end
 
 def write_status(text)
+  clear_status_line
   write(STATUS_LINE, 0, text)
 end
 
 def write_score(lines, level)
   write(SCORE_ROW, SCORE_COLUMN, "Lines: " + lines.to_s)
   write(SCORE_ROW + 1, SCORE_COLUMN, "Level: " + level.to_s)
+end
+
+def clear_status_line
+  Curses.setpos(STATUS_LINE, 0)
+  Curses.deleteln
 end
 
 def write(row, column, text)
@@ -40,7 +46,6 @@ class Tetris
   end
 
   def draw_board
-    Curses.clear
     clear_board_of_active_pieces
     @active_piece.each_cell { |row,column|
       if @active_piece.blocks[row][column] == "x"
@@ -70,9 +75,53 @@ class Tetris
     each_board_cell { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
   end
 
+  def can_move_left?
+    if @active_piece.column <= 0
+      return false
+    end
+    can_move?(@active_piece.row, @active_piece.column - 1)
+  end
+
+  def left
+    if can_move_left?
+      @active_piece.column -= 1
+      draw_board
+    end
+  end
+
+  def can_move_right?
+    if @active_piece.column + @active_piece.width >= BOARD_COLUMNS
+      return false
+    end
+    can_move?(@active_piece.row, @active_piece.column + 1)
+  end
+
+  def right
+    if can_move_right?
+      @active_piece.column += 1
+      draw_board
+    end
+  end
+
+  def can_move_down?
+    if @active_piece.bottom >= BOARD_ROWS
+      return false
+    end
+    can_move?(@active_piece.row, @active_piece.column)
+  end
+
+  def can_move?(start_row, start_column)
+    @active_piece.each_cell { |row,column|
+      if @board[start_row + row][start_column + column] == "o" && @active_piece.blocks[row][column] == "x"
+        return false
+      end
+    }
+    true
+  end
+
   def down
     @active_piece.row += 1
-    if blocked?
+    if !can_move_down?
       mark_active_piece_inactive
       newPiece
     end
@@ -88,29 +137,20 @@ class Tetris
         completed_lines += 1
       end
     }
-    @lines += completed_lines
     if completed_lines > 0
       draw_board
-      sleep 1 / @level
+      sleep_based_on_level
+      @lines += completed_lines
+      if @lines > 5
+        @level = @lines / 5
+      end
     end
     @board.delete_if { |row| row.uniq == ["="] }
     completed_lines.times { @board.unshift Array.new(BOARD_COLUMNS, "-") }
   end
 
   def game_over?
-    blocked? && @active_piece.row == 0
-  end
-
-  def blocked?
-    if @active_piece.bottom >= BOARD_ROWS
-      return true
-    end
-    @active_piece.each_cell { |row,column|
-      if @board[@active_piece.row + row][@active_piece.column + column] == "o" && @active_piece.blocks[row][column] == "x"
-        return true
-      end
-    }
-    false
+    !can_move_down? #&& !can_move_left && !can_move_right
   end
 
   def each_board_cell
@@ -130,10 +170,11 @@ class Tetris
 
     Thread.new {
       newPiece
-      sleep 1 / @level
+      sleep_based_on_level
       loop do
         down
-        sleep 1 / @level
+        sleep_based_on_level
+        write_status(can_move_down?.to_s + "\n" + game_over?.to_s)
         if game_over?
           write_status("Game Over!!!\n\nPress any key...")
           block_waiting_for_key_press
@@ -141,6 +182,10 @@ class Tetris
         end
       end
     }.join
+  end
+
+  def sleep_based_on_level
+    sleep 1.0 / (@level * 0.5)
   end
 
   def block_waiting_for_key_press
@@ -156,11 +201,9 @@ class Tetris
       when Curses::Key::DOWN
         down
       when Curses::Key::LEFT
-        @active_piece.left
-        draw_board
+        left
       when Curses::Key::RIGHT
-        @active_piece.right
-        draw_board
+        right
     end
   end
 end
@@ -200,26 +243,6 @@ class Tetrimino
 
   def bottom
     @row + height - 1
-  end
-
-  def can_move_left?
-    @column > 0
-  end
-
-  def left
-    if can_move_left?
-      @column -= 1
-    end
-  end
-
-  def can_move_right?
-    @column + width < BOARD_COLUMNS
-  end
-
-  def right
-    if can_move_right?
-      @column += 1
-    end
   end
 
   def rotate
@@ -286,13 +309,6 @@ begin
   Curses.noecho
   Curses.init_screen
   Curses.stdscr.keypad(true)
-  #Curses.start_color
-  #Curses.init_pair(COLOR_BLUE,COLOR_BLUE,COLOR_BLACK)
-  #Curses.attron(color_pair(COLOR_BLUE)|A_BLINK) {
-  #  Curses.setpos(STATUS_LINE, 0)
-  #  Curses.addstr("This is blue!!!");
-  #  Curses.refresh
-  #}
 
   Tetris.new.start_game
 ensure
