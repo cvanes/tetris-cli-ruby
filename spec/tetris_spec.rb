@@ -7,7 +7,7 @@ def empty_board
   Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
 end
 
-def each_active_cell
+def each_active_cell_on_board
   @board.each_index { |row|
     @board[row].each_index { |column|
       if @board[row][column] == "x"
@@ -25,47 +25,62 @@ def each_active_shape_cell
   }  
 end
 
-def active_shape_top_left
-  top, left = BOARD_ROWS, BOARD_COLUMNS
-  each_active_cell { |row,column|
+def active_shape_top
+  top = BOARD_ROWS
+  each_active_cell_on_board { |row,column|
     if row < top
       top = row
     end
+  }
+  top
+end
+
+def active_shape_left
+  left = BOARD_COLUMNS
+  each_active_cell_on_board { |row,column|
     if column < left
       left = column
     end
   }
-  return top, left
+  left
 end
 
-def active_shape_bottom_right
-  bottom, right = 0, 0
-  each_active_cell { |row,column|
+def active_shape_bottom
+  bottom = 0
+  each_active_cell_on_board { |row,column|
     if row > bottom
       bottom = row
     end
+  }
+  bottom
+end
+
+def active_shape_right
+  right = 0
+  each_active_cell_on_board { |row,column|
     if column > right
       right = column
     end
   }
-  return bottom, right
+  right
 end
 
 def active_shape_height
-  top, left = active_shape_top_left
-  bottom, right = active_shape_bottom_right
+  top = active_shape_top
+  bottom = active_shape_bottom
   bottom - top + 1
 end
 
 def active_shape_width
-  top, left = active_shape_top_left
-  bottom, right = active_shape_bottom_right
+  left = active_shape_left
+  right = active_shape_right
   right - left + 1
 end
 
 def active_shape_from_board
   @active_shape = Array.new(active_shape_height) { Array.new(active_shape_width, "-") }
-  top, left = active_shape_top_left
+  top = active_shape_left
+  left = active_shape_left
   each_active_shape_cell { |row,column|
     if @board[row + top][column + left] == "x"
       @active_shape[row][column] = @board[row + top][column + left]
@@ -106,14 +121,14 @@ describe Tetris do
   context "moving shape" do
     before(:each) do
       @game.new_shape
-      @old_row, @old_column = active_shape_top_left
+      @top = active_shape_top
+      @left = active_shape_left
     end
 
     describe "#down" do
       it "should move active piece down one row" do
         @game.down
-        row, column = active_shape_top_left
-        row.should == @old_row + 1
+        active_shape_top.should == @top + 1
       end
 
       it "should mark shape as inactive when it hits the bottom" do
@@ -135,40 +150,35 @@ describe Tetris do
         for i in 0..BOARD_ROWS - active_shape_height
           @game.down
         end
-        row, column = active_shape_top_left
-        row.should == 0
+        active_shape_top.should == 0
       end      
     end
 
     describe "#right" do
       it "should move active piece right one column" do
         @game.right
-        row, column = active_shape_top_left
-        column.should == @old_column + 1
+        active_shape_left.should == @left + 1
       end
 
       it "should not be able to move right past edge of board" do
         for i in 1..BOARD_COLUMNS
           @game.right
         end
-        row, column = active_shape_bottom_right
-        column.should == BOARD_COLUMNS - 1
+        active_shape_left.should == BOARD_COLUMNS - active_shape_width
       end
     end    
 
     describe "#left" do
       it "should move active piece left one column" do
         @game.left
-        row, column = active_shape_top_left
-        column.should == @old_column - 1
+        active_shape_left.should == @left - 1
       end
 
       it "should not be able to move left past edge of board" do
         for i in 1..BOARD_COLUMNS
           @game.left
         end
-        row, column = active_shape_top_left
-        column.should == 0
+        active_shape_left.should == 0
       end      
     end     
   end

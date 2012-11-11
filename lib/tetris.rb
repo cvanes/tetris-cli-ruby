@@ -206,9 +206,9 @@ class Tetrimino
 
   def width
     size = 0
-    @blocks.each { |column|
-      if column.length > size
-        size = column.length
+    @blocks.each { |row|
+      if row.length > size
+        size = row.length
       end
     }
     return size
