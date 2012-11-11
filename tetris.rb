@@ -38,11 +38,14 @@ class Tetris
     @board = Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
     @level = 1
     @lines = 0
+    @game_over = false
   end
 
   def newPiece
     @active_piece = eval(@all_shapes[rand(0..6)]).new
-    draw_board
+    if !can_move_down?
+      @game_over = true
+    end
   end
 
   def draw_board
@@ -85,7 +88,6 @@ class Tetris
   def left
     if can_move_left?
       @active_piece.column -= 1
-      draw_board
     end
   end
 
@@ -99,15 +101,14 @@ class Tetris
   def right
     if can_move_right?
       @active_piece.column += 1
-      draw_board
     end
   end
 
   def can_move_down?
-    if @active_piece.bottom >= BOARD_ROWS
+    if @active_piece.bottom + 1 >= BOARD_ROWS
       return false
     end
-    can_move?(@active_piece.row, @active_piece.column)
+    can_move?(@active_piece.row + 1, @active_piece.column)
   end
 
   def can_move?(start_row, start_column)
@@ -120,13 +121,13 @@ class Tetris
   end
 
   def down
-    @active_piece.row += 1
-    if !can_move_down?
+    if can_move_down?
+      @active_piece.row += 1
+      delete_complete_lines
+    else
       mark_active_piece_inactive
       newPiece
     end
-    delete_complete_lines
-    draw_board
   end
 
   def delete_complete_lines
@@ -149,10 +150,6 @@ class Tetris
     completed_lines.times { @board.unshift Array.new(BOARD_COLUMNS, "-") }
   end
 
-  def game_over?
-    !can_move_down? #&& !can_move_left && !can_move_right
-  end
-
   def each_board_cell
     for i in 0..@board.length - 1
       for j in 0..@board[i].length - 1
@@ -162,26 +159,37 @@ class Tetris
   end
 
   def start_game
-    Thread.new {
+    user_input_thread = Thread.new {
       loop do
         handle_user_input
+        draw_board
+        if @game_over
+          game_over
+          break
+        end
       end
     }
 
     Thread.new {
       newPiece
+      draw_board
       sleep_based_on_level
       loop do
-        down
-        sleep_based_on_level
-        write_status(can_move_down?.to_s + "\n" + game_over?.to_s)
-        if game_over?
-          write_status("Game Over!!!\n\nPress any key...")
-          block_waiting_for_key_press
+        if @game_over
+          game_over
           break
-        end
+        elsif can_move_down? 
+          down
+        end  
+        draw_board
+        sleep_based_on_level
       end
     }.join
+  end
+
+  def game_over
+    write_status("Game Over!!!\n\nPress any key...")
+    block_waiting_for_key_press
   end
 
   def sleep_based_on_level
