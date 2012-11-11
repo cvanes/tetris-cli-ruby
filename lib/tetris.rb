@@ -6,6 +6,8 @@ class Tetris
     @lines = 0
     @game_over = false
     @ui = ui
+    @ui.show_board(@board)
+    @ui.set_score(@lines, @level)
   end
 
   def new_shape
@@ -13,6 +15,7 @@ class Tetris
     if !can_move_down?
       @game_over = true
     end
+    draw_board
   end
 
   def draw_board
@@ -93,18 +96,21 @@ class Tetris
         @active_shape.column = BOARD_COLUMNS - @active_shape.height
       end
       @active_shape.rotate
+      draw_board
     end
   end  
 
   def left
     if can_move_left?
       @active_shape.left
+      draw_board
     end
   end  
 
   def right
     if can_move_right?
       @active_shape.right
+      draw_board
     end
   end
 
@@ -117,6 +123,7 @@ class Tetris
       mark_active_shape_inactive
       new_shape
     end
+    draw_board
   end
 
   def delete_complete_lines

@@ -50,7 +50,6 @@ class TerminalInput
     Thread.new {
       loop do
         handle_user_input
-        @game.draw_board
       end
     }
   end
