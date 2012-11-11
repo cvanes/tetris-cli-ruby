@@ -41,7 +41,7 @@ class Tetris
     @game_over = false
   end
 
-  def newPiece
+  def new_shape
     @active_shape = eval(@all_shapes[rand(0..6)]).new
     if !can_move_down?
       @game_over = true
@@ -49,94 +49,110 @@ class Tetris
   end
 
   def draw_board
-    clear_board_of_active_pieces
-    @active_shape.each_cell { |row,column|
-      if @active_shape.blocks[row][column] == "x"
-        @board[row + @active_shape.row][column + @active_shape.column] = @active_shape.blocks[row][column]
-      end
-    }
-    game_board = "\n"
-    @board.each do |row|
-      row.each do |column|
-        game_board += column
-      end
-      game_board += "\n"
-    end
-    write_top_left(game_board)
+    clear_board_of_active_shapes
+    add_active_shape_to_board
+    write_top_left(board_to_s)
     write_score(@lines, @level)
   end
 
-  def mark_active_piece_inactive
-    update_active_piece_display "o"
+  def add_active_shape_to_board
+    @active_shape.each_cell { |row,column,cell|
+      if cell == "x"
+        @board[row + @active_shape.row][column + @active_shape.column] = cell
+      end
+    }
   end
 
-  def clear_board_of_active_pieces
-    update_active_piece_display "-"
+  def board_to_s
+    game_board = "\n"
+    @board.each { |row| game_board += row.join + "\n" }
+    game_board
   end
 
-  def update_active_piece_display(new_char)
-    each_board_cell { |row,column| if @board[row][column] == "x"; @board[row][column] = new_char end }
+  def mark_active_shape_inactive
+    change_appearance_of_active_shape "o"
   end
+
+  def clear_board_of_active_shapes
+    change_appearance_of_active_shape "-"
+  end
+
+  def change_appearance_of_active_shape(new_char)
+    set_board { |cell| cell == "x" ? new_char : cell }
+  end
+
+  def set_board
+    for row in 0..@board.length - 1
+      for column in 0..@board[row].length - 1
+        @board[row][column] = yield @board[row][column]
+      end
+    end
+  end  
 
   def can_rotate?
-    @active_shape.column + @active_shape.height <= BOARD_COLUMNS
-  end
-
-  def rotate
-    if can_rotate?
-      @active_shape.rotate
-    end
+    true
   end
 
   def can_move_left?
     if @active_shape.column <= 0
       return false
     end
-    can_move?(@active_shape.row, @active_shape.column - 1)
-  end
-
-  def left
-    if can_move_left?
-      @active_shape.column -= 1
-    end
+    can_move_to?(@active_shape.row, @active_shape.column - 1)
   end
 
   def can_move_right?
     if @active_shape.column + @active_shape.width >= BOARD_COLUMNS
       return false
     end
-    can_move?(@active_shape.row, @active_shape.column + 1)
-  end
-
-  def right
-    if can_move_right?
-      @active_shape.column += 1
-    end
+    can_move_to?(@active_shape.row, @active_shape.column + 1)
   end
 
   def can_move_down?
     if @active_shape.bottom + 1 >= BOARD_ROWS
       return false
     end
-    can_move?(@active_shape.row + 1, @active_shape.column)
+    can_move_to?(@active_shape.row + 1, @active_shape.column)
   end
 
-  def can_move?(start_row, start_column)
-    @active_shape.each_cell { |row,column|
-      if @board[start_row + row][start_column + column] == "o" && @active_shape.blocks[row][column] == "x"
+  def can_move_to?(start_row, start_column)
+    @active_shape.each_cell { |row,column,cell|
+      if @board[start_row + row][start_column + column] == "o" && cell == "x"
         return false
       end
     }
     true
   end
 
+  def rotate
+    if can_rotate?
+      if @active_shape.column + @active_shape.height > BOARD_COLUMNS
+        # shift to the left before rotating
+        @active_shape.column = BOARD_COLUMNS - @active_shape.height
+      end
+      @active_shape.rotate
+    end
+  end  
+
+  def left
+    if can_move_left?
+      @active_shape.left
+    end
+  end  
+
+  def right
+    if can_move_right?
+      @active_shape.right
+    end
+  end
+
   def down
     if can_move_down?
-      @active_shape.row += 1
+      @active_shape.down
       delete_complete_lines
+      level_up
     else
-      mark_active_piece_inactive
-      newPiece
+      mark_active_shape_inactive
+      new_shape
     end
   end
 
@@ -152,19 +168,14 @@ class Tetris
       draw_board
       sleep_for_level
       @lines += completed_lines
-      if @lines > 5
-        @level = @lines / 5
-      end
     end
     @board.delete_if { |row| row.uniq == ["="] }
     completed_lines.times { @board.unshift Array.new(BOARD_COLUMNS, "-") }
   end
 
-  def each_board_cell
-    for i in 0..@board.length - 1
-      for j in 0..@board[i].length - 1
-        yield i, j
-      end
+  def level_up
+    if @lines >= 5
+      @level = (@lines / 5) + 1
     end
   end
 
@@ -182,7 +193,7 @@ class Tetris
     }
 
     @game_thread = Thread.new {
-      newPiece
+      new_shape
       draw_board
       sleep_for_level
       loop do
@@ -205,14 +216,14 @@ class Tetris
 
   def display_game_over
     write_status("Game Over!!!\n\nPress any key...")
-    block_waiting_for_key_press
+    block_waiting_for_confirmation
   end
 
   def sleep_for_level
     sleep 1.0 / (@level * 0.5)
   end
 
-  def block_waiting_for_key_press
+  def block_waiting_for_confirmation
     Curses.timeout = -1
     Curses.getch
   end
@@ -243,9 +254,9 @@ class Tetrimino
   end
 
   def each_cell
-    for i in 0..@blocks.length - 1
-      for j in 0..@blocks[i].length - 1
-        yield i, j
+    for row in 0..@blocks.length - 1
+      for column in 0..@blocks[row].length - 1
+        yield row, column, @blocks[row][column]
       end
     end
   end
@@ -272,6 +283,18 @@ class Tetrimino
     @blocks = @all_rotations.shift
     @all_rotations.push(@blocks)
   end
+
+  def left
+    @column -= 1
+  end  
+
+  def right
+    @column += 1
+  end
+
+  def down
+    @row += 1
+  end  
 end
 
 class I < Tetrimino
