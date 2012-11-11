@@ -140,7 +140,7 @@ class Tetris
     }
     if completed_lines > 0
       draw_board
-      sleep_based_on_level
+      sleep_for_level
       @lines += completed_lines
       if @lines > 5
         @level = @lines / 5
@@ -164,25 +164,27 @@ class Tetris
         handle_user_input
         draw_board
         if @game_over
+          game_thread.kill
           game_over
           break
         end
       end
     }
 
-    Thread.new {
+    game_thread = Thread.new {
       newPiece
       draw_board
-      sleep_based_on_level
+      sleep_for_level
       loop do
         if @game_over
+          user_input_thread.kill
           game_over
           break
         elsif can_move_down? 
           down
         end  
         draw_board
-        sleep_based_on_level
+        sleep_for_level
       end
     }.join
   end
@@ -192,7 +194,7 @@ class Tetris
     block_waiting_for_key_press
   end
 
-  def sleep_based_on_level
+  def sleep_for_level
     sleep 1.0 / (@level * 0.5)
   end
 
