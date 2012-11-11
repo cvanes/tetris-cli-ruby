@@ -66,15 +66,11 @@ def active_shape_right
 end
 
 def active_shape_height
-  top = active_shape_top
-  bottom = active_shape_bottom
-  bottom - top + 1
+  active_shape_bottom - active_shape_top + 1
 end
 
 def active_shape_width
-  left = active_shape_left
-  right = active_shape_right
-  right - left + 1
+  active_shape_right - active_shape_left + 1
 end
 
 def active_shape_from_board
@@ -137,11 +133,9 @@ describe Tetris do
         for i in 0..BOARD_ROWS - height
           @game.down
         end
-        start_row = BOARD_ROWS - height
-        start_column = @old_column
         each_active_shape_cell { |row,column|
           if active_shape[row][column] == "x"
-            @board[start_row + row][start_column + column].should == "o"
+            @board[BOARD_ROWS - height + row][@left + column].should == "o"
           end
         }
       end
