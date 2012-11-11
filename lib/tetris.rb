@@ -17,8 +17,10 @@ class Tetris
 
   def draw_board
     clear_board_of_active_shapes
-    add_active_shape_to_board
-    @ui.show_board(board_to_s)
+    if @active_shape != nil
+      add_active_shape_to_board
+    end
+    @ui.show_board(@board)
     @ui.set_score(@lines, @level)
   end
 
@@ -28,12 +30,6 @@ class Tetris
         @board[row + @active_shape.row][column + @active_shape.column] = cell
       end
     }
-  end
-
-  def board_to_s
-    game_board = "\n"
-    @board.each { |row| game_board += row.join + "\n" }
-    game_board
   end
 
   def mark_active_shape_inactive

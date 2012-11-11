@@ -2,8 +2,14 @@ require 'curses'
 include Curses
 
 class TerminalOutput
-  def show_board(text)
-    write(0, 0, text)
+  def show_board(board)
+    write(0, 0, board_to_s(board))
+  end
+
+  def board_to_s(board)
+    game_board = "\n"
+    board.each { |row| game_board += row.join + "\n" }
+    game_board
   end
 
   def set_status(text)
