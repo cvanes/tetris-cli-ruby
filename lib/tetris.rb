@@ -1,6 +1,7 @@
 class Tetris
   def initialize(ui)
     @all_shapes = ["I", "J", "L", "O", "S", "Z", "T"]
+    @next_shape = eval(@all_shapes[rand(0..6)]).new
     @board = Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
     @level = 1
     @lines = 0
@@ -11,7 +12,8 @@ class Tetris
   end
 
   def new_shape
-    @active_shape = eval(@all_shapes[rand(0..6)]).new
+    @active_shape = @next_shape
+    @next_shape = eval(@all_shapes[rand(0..6)]).new
     if !can_move_down?
       @game_over = true
     end
@@ -24,6 +26,7 @@ class Tetris
       add_active_shape_to_board
     end
     @ui.show_board(@board)
+    @ui.set_active_shapes(@active_shape, @next_shape)
     @ui.set_score(@lines, @level)
   end
 

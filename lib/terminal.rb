@@ -17,6 +17,10 @@ class TerminalOutput
     write(STATUS_LINE, 0, text)
   end
 
+  def set_active_shapes(active_shape, next_shape)
+    # displaying next shape not yet supported
+  end
+
   def set_score(lines, level)
     write(SCORE_ROW, SCORE_COLUMN, "Lines: " + lines.to_s)
     write(SCORE_ROW + 1, SCORE_COLUMN, "Level: " + level.to_s)
