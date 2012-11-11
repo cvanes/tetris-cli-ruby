@@ -4,6 +4,8 @@ include Curses
 BOARD_ROWS = 15
 BOARD_COLUMNS = 10
 STATUS_LINE = BOARD_ROWS + 2
+SCORE_ROW = 2
+SCORE_COLUMN = BOARD_COLUMNS + 2
 
 def write_top_left(text)
   write(0, 0, text)
@@ -11,6 +13,11 @@ end
 
 def write_status(text)
   write(STATUS_LINE, 0, text)
+end
+
+def write_score(lines, level)
+  write(SCORE_ROW, SCORE_COLUMN, "Lines: " + lines.to_s)
+  write(SCORE_ROW + 1, SCORE_COLUMN, "Level: " + level.to_s)
 end
 
 def write(row, column, text)
@@ -24,6 +31,7 @@ class Tetris
     @all_shapes = ["I", "J", "L", "O", "S", "Z", "T"]
     @board = Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
     @level = 1
+    @lines = 0
   end
 
   def newPiece
@@ -32,6 +40,7 @@ class Tetris
   end
 
   def draw_board
+    Curses.clear
     clear_board_of_active_pieces
     @active_piece.each_cell { |row,column|
       if @active_piece.blocks[row][column] == "x"
@@ -46,6 +55,7 @@ class Tetris
       game_board += "\n"
     end
     write_top_left(game_board)
+    write_score(@lines, @level)
   end
 
   def mark_active_piece_inactive
@@ -71,18 +81,20 @@ class Tetris
   end
 
   def delete_complete_lines
+    completed_lines = 0
     @board.each_index { |i|
       if @board[i].uniq == ["o"]
         @board[i] = Array.new(BOARD_COLUMNS, "=")
-        sleep 3
+        completed_lines += 1
       end
     }
-    @board.delete_if { |row|
-      row.uniq == ["="]
-    }
-    for i in @board.size..BOARD_ROWS - 1
-      @board.unshift Array.new(BOARD_COLUMNS, "-")
+    @lines += completed_lines
+    if completed_lines > 0
+      draw_board
+      sleep 1 / @level
     end
+    @board.delete_if { |row| row.uniq == ["="] }
+    completed_lines.times { @board.unshift Array.new(BOARD_COLUMNS, "-") }
   end
 
   def game_over?
