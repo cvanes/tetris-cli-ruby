@@ -95,7 +95,6 @@ describe "Game" do
       end      
     end   
 
-    # BUG: this will fail as for some reason it takes two calls to rotate
     describe "rotate" do
       it "should rotate active shape which isn't blocked in any dimension" do
         @game.rotate
