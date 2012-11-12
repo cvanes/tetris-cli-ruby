@@ -1,7 +1,6 @@
 class Tetris
   def initialize(ui)
-    @all_shapes = ["I", "J", "L", "O", "S", "Z", "T"]
-    @next_shape = eval(@all_shapes[rand(0..6)]).new
+    @next_shape = random_shape
     @board = Array.new(BOARD_ROWS) {Array.new(BOARD_COLUMNS, "-")}
     @level = 1
     @lines = 0
@@ -11,9 +10,13 @@ class Tetris
     @ui.set_score(@lines, @level)
   end
 
+  def random_shape
+    eval(["I", "J", "L", "O", "S", "Z", "T"][rand(0..6)]).new
+  end
+
   def new_shape
     @active_shape = @next_shape
-    @next_shape = eval(@all_shapes[rand(0..6)]).new
+    @next_shape = random_shape
     if !can_move_down?
       @game_over = true
     end
@@ -31,7 +34,7 @@ class Tetris
   end
 
   def add_active_shape_to_board
-    @active_shape.each_cell { |row,column,cell|
+    @active_shape.each_cell_with_indices { |row,column,cell|
       if cell == "x" || cell == "o"
         @board[row + @active_shape.row][column + @active_shape.column] = cell
       end
@@ -76,7 +79,7 @@ class Tetris
   end
 
   def can_move_to?(start_row, start_column)
-    @active_shape.each_cell { |row,column,cell|
+    @active_shape.each_cell_with_indices { |row,column,cell|
       if @board[start_row + row][start_column + column] == "o" && cell == "x"
         return false
       end
@@ -115,6 +118,7 @@ class Tetris
       level_up
     else
       @active_shape.mark_inactive
+      add_active_shape_to_board
       new_shape
     end
     draw_board
@@ -146,11 +150,9 @@ class Tetris
   def start_game
     game_thread = Thread.new {
       new_shape
-      draw_board
       sleep_for_level
       loop do
         down  
-        draw_board
         sleep_for_level
       end
     }

@@ -44,12 +44,11 @@ describe Tetris do
       end
 
       it "should mark shape as inactive when it hits the bottom" do
-        inactive_shape_cells = @active_shape.blocks
-        inactive_shape_height = @active_shape.height
-        for i in 0..BOARD_ROWS - inactive_shape_height
+        shape_being_moved_down = @active_shape
+        for i in 0..BOARD_ROWS - shape_being_moved_down.height
           @game.down
         end
-        @active_shape.active?.should be false
+        shape_being_moved_down.active?.should be false
       end
 
       it "should create new shape at top when previous hits bottom" do
