@@ -1,4 +1,4 @@
-require 'tetris'
+require_relative 'spec_helper'
 
 BOARD_ROWS = 10
 BOARD_COLUMNS = 15
@@ -30,14 +30,14 @@ describe Tetris do
     end    
   end  
 
-  context "moving shape" do
+  context "moving" do
     before(:each) do
       @game.new_shape
       @top = @active_shape.row
       @left = @active_shape.column
     end
 
-    describe "#down" do
+    describe "down" do
       it "should move active piece down one row" do
         @game.down
         @active_shape.row.should == @top + 1
@@ -59,7 +59,7 @@ describe Tetris do
       end      
     end
 
-    describe "#right" do
+    describe "right" do
       it "should move active piece right one column" do
         @game.right
         @active_shape.column.should == @left + 1
@@ -73,7 +73,7 @@ describe Tetris do
       end
     end    
 
-    describe "#left" do
+    describe "left" do
       it "should move active piece left one column" do
         @game.left
         @active_shape.column.should == @left - 1
