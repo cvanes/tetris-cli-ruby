@@ -184,7 +184,7 @@ class Tetrimino
 
   def initialize(all_rotations)
     @all_rotations = all_rotations
-    @blocks = @all_rotations.first
+    rotate
     @column = (BOARD_COLUMNS - width) / 2 - 1
     @row = 0
   end
