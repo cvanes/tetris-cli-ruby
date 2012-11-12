@@ -32,22 +32,14 @@ class Tetris
 
   def add_active_shape_to_board
     @active_shape.each_cell { |row,column,cell|
-      if cell == "x"
+      if cell == "x" || cell == "o"
         @board[row + @active_shape.row][column + @active_shape.column] = cell
       end
     }
   end
 
-  def mark_active_shape_inactive
-    change_appearance_of_active_shape "o"
-  end
-
   def clear_board_of_active_shapes
-    change_appearance_of_active_shape "-"
-  end
-
-  def change_appearance_of_active_shape(new_char)
-    set_board { |cell| cell == "x" ? new_char : cell }
+    set_board { |cell| cell == "x" ? "-" : cell }
   end
 
   def set_board
@@ -122,7 +114,7 @@ class Tetris
       delete_complete_lines
       level_up
     else
-      mark_active_shape_inactive
+      @active_shape.mark_inactive
       new_shape
     end
     draw_board
@@ -195,12 +187,33 @@ class Tetrimino
     @row = 0
   end
 
-  def each_cell
+  def each_cell_with_indices
     @blocks.each_index { |row|
       @blocks[row].each_index { |column|
         yield row, column, @blocks[row][column]
       }
     }
+  end
+
+  def each_cell
+    @blocks.each { |row|
+      row.each { |cell|
+        yield cell
+      }
+    }
+  end
+
+  def mark_inactive 
+    each_cell_with_indices { |row,column,cell|
+      if cell == "x"
+        @blocks[row][column] = "o"
+      end
+    }
+  end
+
+  def active?
+    each_cell { |cell| if cell == "x"; return true end }
+    false
   end
 
   def height

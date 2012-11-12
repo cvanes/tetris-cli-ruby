@@ -33,7 +33,6 @@ describe Tetris do
   context "moving shape" do
     before(:each) do
       @game.new_shape
-      # @active_shape = ActiveShape.new
       @top = @active_shape.row
       @left = @active_shape.column
     end
@@ -50,13 +49,7 @@ describe Tetris do
         for i in 0..BOARD_ROWS - inactive_shape_height
           @game.down
         end
-        inactive_shape_cells.each_index { |row|
-          inactive_shape_cells[row].each_index { |column|
-            if inactive_shape_cells[row][column] == "x"
-              $board[BOARD_ROWS - inactive_shape_height + row][@left + column].should == "o"
-            end
-          }
-        }
+        @active_shape.active?.should be false
       end
 
       it "should create new shape at top when previous hits bottom" do
