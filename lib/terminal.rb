@@ -1,7 +1,38 @@
 require 'curses'
 include Curses
 
-class TerminalOutput
+class Terminal
+  attr_accessor :game
+
+  def initialize
+    noecho
+    init_screen
+    stdscr.keypad(true)
+
+    Thread.new {
+      loop do
+        handle_user_input
+      end
+    }
+  end
+
+  def close
+    close_screen
+  end  
+
+  def handle_user_input
+    case getch
+      when Key::UP
+        @game.rotate
+      when Key::DOWN
+        @game.down
+      when Key::LEFT
+        @game.left
+      when Key::RIGHT
+        @game.right
+    end
+  end  
+
   def show_board(board)
     write(0, 0, board_to_s(board))
   end
@@ -47,27 +78,3 @@ class TerminalOutput
     getch
   end
 end
-
-class TerminalInput
-  def initialize(game)
-    @game = game
-    Thread.new {
-      loop do
-        handle_user_input
-      end
-    }
-  end
-
-  def handle_user_input
-    case getch
-      when Key::UP
-        @game.rotate
-      when Key::DOWN
-        @game.down
-      when Key::LEFT
-        @game.left
-      when Key::RIGHT
-        @game.right
-    end
-  end
-end 

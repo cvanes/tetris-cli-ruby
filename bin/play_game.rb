@@ -10,14 +10,10 @@ SCORE_ROW = 2
 SCORE_COLUMN = BOARD_COLUMNS + 2
 
 begin
-  Curses.noecho
-  Curses.init_screen
-  Curses.stdscr.keypad(true)
-
-  ui = TerminalOutput.new
-  game = Tetris.new(ui)
-  TerminalInput.new(game)
+  terminal = Terminal.new
+  game = Tetris.new(terminal)
+  terminal.game = game
   game.start_game
 ensure
-  Curses.close_screen
+  terminal.close
 end
