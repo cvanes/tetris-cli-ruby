@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require_relative '../lib/tetris'
 require_relative '../lib/terminal'
 

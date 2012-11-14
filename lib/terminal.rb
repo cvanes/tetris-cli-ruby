@@ -27,14 +27,14 @@ class TerminalOutput
   end
 
   def clear_status_line
-    Curses.setpos(STATUS_LINE, 0)
-    Curses.deleteln
+    setpos(STATUS_LINE, 0)
+    deleteln
   end
 
   def write(row, column, text)
-    Curses.setpos(row, column)
-    Curses.addstr(text);
-    Curses.refresh
+    setpos(row, column)
+    addstr(text);
+    refresh
   end
 
   def display_game_over
@@ -43,8 +43,8 @@ class TerminalOutput
   end
 
   def block_waiting_for_confirmation
-    Curses.timeout = -1
-    Curses.getch
+    timeout = -1
+    getch
   end
 end
 
@@ -59,14 +59,14 @@ class TerminalInput
   end
 
   def handle_user_input
-    case Curses.getch
-      when Curses::Key::UP
+    case getch
+      when Key::UP
         @game.rotate
-      when Curses::Key::DOWN
+      when Key::DOWN
         @game.down
-      when Curses::Key::LEFT
+      when Key::LEFT
         @game.left
-      when Curses::Key::RIGHT
+      when Key::RIGHT
         @game.right
     end
   end
