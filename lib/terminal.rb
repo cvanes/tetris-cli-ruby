@@ -49,12 +49,17 @@ class Terminal
   end
 
   def set_active_shapes(active_shape, next_shape)
-    # displaying next shape not yet supported
+    write(NEXT_PIECE_ROW, INFO_COLUMN, "Next Piece:")
+    i = 2
+    next_shape.each_row { |row|
+      write(NEXT_PIECE_ROW + i, INFO_COLUMN + 1, row.join.gsub("-", " "))
+      i = i+ 1
+    }
   end
 
   def set_score(lines, level)
-    write(SCORE_ROW, SCORE_COLUMN, "Lines: " + lines.to_s)
-    write(SCORE_ROW + 1, SCORE_COLUMN, "Level: " + level.to_s)
+    write(SCORE_ROW, INFO_COLUMN, "Lines: " + lines.to_s)
+    write(LEVEL_ROW, INFO_COLUMN, "Level: " + level.to_s)
   end
 
   def clear_status_line

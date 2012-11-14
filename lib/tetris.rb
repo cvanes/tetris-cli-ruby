@@ -6,8 +6,7 @@ class Tetris
     @lines = 0
     @game_over = false
     @ui = ui
-    @ui.show_board(@board)
-    @ui.set_score(@lines, @level)
+    draw_board
   end
 
   def random_shape
@@ -202,6 +201,12 @@ class Tetrimino
       row.each { |cell|
         yield cell
       }
+    }
+  end
+
+  def each_row 
+    @blocks.each { |row|
+      yield row
     }
   end
 
